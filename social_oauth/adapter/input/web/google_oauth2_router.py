@@ -114,3 +114,24 @@ async def auth_status(request: Request, session_id: str | None = Cookie(None)):
         "user": user_info,
     }
 
+
+@authentication_router.post("/logout")
+async def logout(session_id: str | None = Cookie(None)):
+    print("[DEBUG] /logout called. session_id:", session_id)
+
+    # 1) 쿠키 또는 요청에서 세션 ID가 있는 경우
+    if session_id:
+        session_key = f"session:{session_id}"
+
+        # 2) redis 세션 삭제
+        try:
+            deleted = redis_client.delete(session_key)
+            print("[DEBUG] Deleted session key in Redis:", session_key, "result:", deleted)
+        except Exception as e:
+            print("[ERROR] Failed to delete session key in Redis:", e)
+
+    # 3) 응답 + 쿠키 삭제
+    response = JSONResponse({"logged_in": False})
+    response.delete_cookie("session_id")
+
+    return response
