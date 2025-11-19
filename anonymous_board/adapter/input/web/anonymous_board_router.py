@@ -8,7 +8,7 @@ from anonymous_board.application.usecase.anonymous_board_usecase import Anonymou
 from anonymous_board.infrastructure.repository.anonymous_board_repository_impl import AnonymousBoardRepositoryImpl
 
 anonymous_board_router = APIRouter()
-usecase = AnonymousBoardUseCase(AnonymousBoardRepositoryImpl())
+usecase = AnonymousBoardUseCase.getInstance()
 
 @anonymous_board_router.post("/create", response_model=AnonymousBoardResponse)
 def create_board(request: CreateAnonymousBoardRequest):
