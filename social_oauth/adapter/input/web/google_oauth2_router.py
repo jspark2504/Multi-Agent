@@ -39,18 +39,22 @@ async def process_google_redirect(
     access_token = oauth_usecase.issue_access_token(state or "", code)
     print("[DEBUG] Access token received:", access_token.access_token)
 
-    # 2) 토큰 기반 유저 조회/생성 (DB 저장은 여기 체인에서 처리됨)
-    #    반환값을 굳이 활용하지 않아도, 내부 로직에서 DB에 저장됨.
-    user_usecase.fetch_or_create_user_from_token(access_token)
+    # 2) 유저 조회/생성 (google_user 테이블 저장)
+    user = user_usecase.fetch_or_create_user_from_token(access_token)
 
     # 3) 세션 ID 생성
     session_id = str(uuid.uuid4())
+    google_sub = user.sub
     print("[DEBUG] Generated session_id:", session_id)
 
     # 4) Redis에 "세션ID → access_token" 형태로만 저장 (1시간 TTL)
     #    (기존 as-is 로직과 동일한 형태로 복원)
     redis_client.set(session_id, access_token.access_token, ex=3600)
     print("[DEBUG] Session saved in Redis:", redis_client.exists(session_id))
+
+    # 4-1) redis에 google_sub 저장(DB 조회 용)
+    session_key = f"session:{session_id}"
+    redis_client.set(session_key, google_sub, ex=3600)
 
     # 5) 브라우저 쿠키에 세션ID 심기
     redirect_response = RedirectResponse(CLIENT_REDIRECT_URL)
