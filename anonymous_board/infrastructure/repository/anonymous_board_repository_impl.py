@@ -34,6 +34,8 @@ class AnonymousBoardRepositoryImpl(AnonymousBoardRepositoryPort):
         orm_board = AnonymousBoardORM(
             title=board.title,
             content=board.content,
+            writer_sub=board.writer_sub,  # ✅ 추가
+            writer_nickname=board.writer_nickname,  # ✅ 추가
         )
         self.db.add(orm_board)
         self.db.commit()
@@ -45,11 +47,17 @@ class AnonymousBoardRepositoryImpl(AnonymousBoardRepositoryPort):
         return board
 
     def get_by_id(self, board_id: int) -> Optional[AnonymousBoard]:
-        orm_board = self.db.query(AnonymousBoardORM).filter(AnonymousBoardORM.id == board_id).first()
+        orm_board = (
+            self.db.query(AnonymousBoardORM)
+            .filter(AnonymousBoardORM.id == board_id)
+            .first()
+        )
         if orm_board:
             board = AnonymousBoard(
                 title=orm_board.title,
                 content=orm_board.content,
+                writer_sub=orm_board.writer_sub,
+                writer_nickname=orm_board.writer_nickname,
             )
             board.id = orm_board.id
             board.created_at = orm_board.created_at
@@ -59,11 +67,13 @@ class AnonymousBoardRepositoryImpl(AnonymousBoardRepositoryPort):
 
     def list_all(self) -> List[AnonymousBoard]:
         orm_boards = self.db.query(AnonymousBoardORM).all()
-        boards = []
+        boards: List[AnonymousBoard] = []
         for orm_board in orm_boards:
             board = AnonymousBoard(
                 title=orm_board.title,
                 content=orm_board.content,
+                writer_sub=orm_board.writer_sub,
+                writer_nickname=orm_board.writer_nickname,
             )
             board.id = orm_board.id
             board.created_at = orm_board.created_at
